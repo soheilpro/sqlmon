@@ -1,0 +1,35 @@
+{
+  "name": "sqlmon",
+  "version": "1.0.0",
+  "description": "Collects events from SQL Server and saves them to Elasticseach for further analysis.",
+  "main": "sqlmon.js",
+  "dependencies": {
+    "mssql": "5.1.0",
+    "murmurhash-native": "3.4.1",
+    "parse-duration": "0.1.1",
+    "underscore": "1.9.1",
+    "yargs": "13.3.0"
+  },
+  "preferGlobal": true,
+  "bin": {
+    "sqlmon": "./sqlmon.js"
+  },
+  "scripts": {
+    "test": "echo \"Error: no test specified\" && exit 1"
+  },
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/soheilpro/sqlmon"
+  },
+  "keywords": [
+    "sql",
+    "sqlserver",
+    "elasticsearch",
+    "kibana"
+  ],
+  "author": "Soheil Rashidi",
+  "license": "MIT",
+  "bugs": {
+    "url": "https://github.com/soheilpro/sqlmon/issues"
+  }
+}

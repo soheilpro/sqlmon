@@ -5,7 +5,6 @@
   "main": "sqlmon.js",
   "dependencies": {
     "mssql": "5.1.0",
-    "murmurhash-native": "3.4.1",
     "parse-duration": "0.1.1",
     "underscore": "1.9.1",
     "yargs": "13.3.0"

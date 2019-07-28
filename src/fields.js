@@ -1,4 +1,4 @@
-const murmurHash = require('murmurhash-native').murmurHash;
+const crypto = require('crypto');
 
 function dateUTC(value) {
   if (value === null)
@@ -48,7 +48,7 @@ function queryHash(value) {
 
   value = value.replace(/[^0-9A-Za-z]+/g, ''); // Remove all non-alphanumeric characters
 
-  return murmurHash(value || '', 0x12345789, 'hex');
+  return crypto.createHash('md5').update(value || '').digest('hex');
 }
 
 const Fields = {

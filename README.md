@@ -83,6 +83,9 @@ The default Elasticsearch index name is `sql-YY.MM.DD` which can be changed usin
 --index-prefix trace-
 ```
 
+### Collect only
+If you only want to collect events without saving them to Elasticsearch, you can use the `--collect-only` option.
+
 ### Importing trace files
 If you have a saved trace file (created by either sqlmon or SQL Server Profiler), you can import it into Elasticsearch using the `--import` option:
 

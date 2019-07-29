@@ -28,7 +28,8 @@ const yargs = require('yargs')
   .option('duration', { type: 'string', default: '60s', alias: 'd', describe: 'Duration to run the profiler.'})
   .option('max-size', { type: 'number', default: 1024, describe: 'Maximum size of the trace file (in megabytes).'})
   .option('batch-size', { type: 'number', default: 1000, describe: 'Number of events to save in each batch.'})
-  .option('import', { type: 'string', describe: 'Trace file to import.'});
+  .option('collect-only', { type: 'boolean', conflicts: 'import', describe: 'Only collect events and do not save them to Elasticsearch.'})
+  .option('import', { type: 'string', conflicts: 'collect-only', describe: 'Trace file to import.'});
 
 const cleanupHandlers = [];
 
@@ -130,32 +131,39 @@ async function main() {
     reader.setTraceFilePath(argv['import']);
   }
 
-  console.log(`Reading trace...`);
+  if (!argv['collect-only']) {
+    console.log(`Reading trace...`);
 
-  const totalEvents = await reader.count();
-  let savedEvents = 0;
+    const totalEvents = await reader.count();
+    let savedEvents = 0;
 
-  console.log(`Saving ${totalEvents} events to ${argv['es-address']}...`);
+    console.log(`Saving ${totalEvents} events to ${argv['es-address']}...`);
 
-  reader.start();
+    reader.start();
 
-  reader.onEvents = async (events) => {
-    await processor.process(events);
+    reader.onEvents = async (events) => {
+      await processor.process(events);
 
-    savedEvents += events.length;
-    const progress = (savedEvents * 100 / totalEvents).toFixed(2);
-    process.stdout.write('\033[999D'); // Move cursor to the first column
-    process.stdout.write(padLeft(progress, 6) + '% ' + padLeft(savedEvents, totalEvents.toString().length) + '/' + totalEvents);
-  };
+      savedEvents += events.length;
+      const progress = (savedEvents * 100 / totalEvents).toFixed(2);
+      process.stdout.write('\033[999D'); // Move cursor to the first column
+      process.stdout.write(padLeft(progress, 6) + '% ' + padLeft(savedEvents, totalEvents.toString().length) + '/' + totalEvents);
+    };
 
-  reader.onEnd = async () => {
-    if (totalEvents > 0)
-      console.log();
+    reader.onEnd = async () => {
+      if (totalEvents > 0)
+        console.log();
 
+      console.log("Disconnecting...");
+
+      await connection.close();
+    };
+  }
+  else {
     console.log("Disconnecting...");
 
     await connection.close();
-  };
+  }
 }
 
 main().catch(async error => {

@@ -91,7 +91,7 @@ async function main() {
   await connection.open();
 
   if (!argv['import']) {
-    console.log("Starting trace...");
+    console.log("Creating trace...");
 
     const trace = new Trace({
       connection: connection,
@@ -104,6 +104,11 @@ async function main() {
     cleanupHandlers.push(async () => {
       await trace.stop();
     });
+
+    await trace.create();
+
+    console.log(`Trace file path: ${trace.traceFilePath}`);
+    console.log("Starting trace...");
 
     await trace.start();
 
@@ -124,6 +129,8 @@ async function main() {
 
     reader.setTraceFilePath(argv['import']);
   }
+
+  console.log(`Reading trace...`);
 
   const totalEvents = await reader.count();
   let savedEvents = 0;

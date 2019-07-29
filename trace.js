@@ -49,12 +49,15 @@ class Trace {
     await connection.execute(query);
   }
 
-  async start() {
+  async create() {
     this.traceFilePath = `${this.config.traceDirectory}\\${new Date().toISOString().replace(/\-/g, '').replace('T', '').replace(/:/g, '').replace('.', '').replace('Z', '')}`;
     this.traceId = await this.createTrace(this.config.connection, this.traceFilePath, this.config.maxSize);
     this.traceFilePath += '.trc'; // SQL Server automatically adds this
 
     await this.configureTrace(this.config.connection, this.traceId, this.config.events, this.config.fields);
+  }
+
+  async start() {
     await this.startTrace(this.config.connection, this.traceId);
   }
 

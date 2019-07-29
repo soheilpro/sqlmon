@@ -52,6 +52,7 @@ async function main() {
   const argv = yargs.argv;
   const events = argv['events'].map(event => Events[event]);
   const fields = argv['fields'].map(field => Fields[field]);
+  let traceFilePath;
 
   // StartTime must always be included
   if (argv['fields'].indexOf('StartTime') === -1);
@@ -69,31 +70,11 @@ async function main() {
     await connection.close();
   });
 
-  const reader = new Reader({
-    connection: connection,
-    fields: fields,
-    batchSize: argv['batch-size'],
-  });
-
-  const elasticsearch = new Elasticsearch({
-    address: argv['es-address'],
-    port: argv['es-port'],
-    timeout: argv['es-timeout'] * 1000,
-    indexPrefix: argv['index-prefix'],
-  });
-
-  const processor = new Processor({
-    fields: fields,
-    elasticsearch: elasticsearch,
-  });
-
   console.log(`Connecting to ${argv['ss-address']}...`);
 
   await connection.open();
 
   if (!argv['import']) {
-    console.log("Creating trace...");
-
     const trace = new Trace({
       connection: connection,
       events: events,
@@ -106,9 +87,13 @@ async function main() {
       await trace.stop();
     });
 
+    console.log("Creating trace...");
+
     await trace.create();
 
-    console.log(`Trace file path: ${trace.traceFilePath}`);
+    traceFilePath = trace.traceFilePath;
+
+    console.log(`Trace file path: ${traceFilePath}`);
     console.log("Starting trace...");
 
     await trace.start();
@@ -122,16 +107,33 @@ async function main() {
     console.log("Stopping trace...");
 
     await trace.stop();
-
-    reader.setTraceFilePath(trace.traceFilePath);
   }
   else {
     console.log(`Importing ${argv['import']}...`);
 
-    reader.setTraceFilePath(argv['import']);
+    traceFilePath = argv['import'];
   }
 
   if (!argv['collect-only']) {
+    const reader = new Reader({
+      connection: connection,
+      traceFilePath: traceFilePath,
+      fields: fields,
+      batchSize: argv['batch-size'],
+    });
+
+    const elasticsearch = new Elasticsearch({
+      address: argv['es-address'],
+      port: argv['es-port'],
+      timeout: argv['es-timeout'] * 1000,
+      indexPrefix: argv['index-prefix'],
+    });
+
+    const processor = new Processor({
+      fields: fields,
+      elasticsearch: elasticsearch,
+    });
+
     console.log(`Reading trace...`);
 
     const totalEvents = await reader.count();

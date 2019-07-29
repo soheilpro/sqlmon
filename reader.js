@@ -2,7 +2,6 @@ const _ = require('underscore');
 
 class Reader {
   config;
-  traceFilePath;
   onEvents;
   onEnd;
 
@@ -10,14 +9,10 @@ class Reader {
     this.config = config;
   }
 
-  setTraceFilePath(traceFilePath) {
-    this.traceFilePath = traceFilePath;
-  }
-
   async count() {
     const query = `
       SELECT COUNT(*) as Count
-      FROM fn_trace_gettable(N'${this.traceFilePath}', default)
+      FROM fn_trace_gettable(N'${this.config.traceFilePath}', default)
       WHERE EventClass NOT IN (
         65528, -- Profiler Start
         65534, -- ?
@@ -34,7 +29,7 @@ class Reader {
     const columns = _.uniq(this.config.fields.map(field => `[${field.name}]`)).join(', ');
     const query = `
       SELECT ${columns}
-      FROM fn_trace_gettable(N'${this.traceFilePath}', default)
+      FROM fn_trace_gettable(N'${this.config.traceFilePath}', default)
       WHERE EventClass NOT IN (
         65528, -- Profiler Start
         65534, -- ?

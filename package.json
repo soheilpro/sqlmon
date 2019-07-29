@@ -1,6 +1,6 @@
 {
   "name": "sqlmon",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Collects events from SQL Server and saves them to Elasticseach for further analysis.",
   "main": "sqlmon.js",
   "dependencies": {

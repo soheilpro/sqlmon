@@ -1,4 +1,4 @@
-const crypto = require('crypto');
+const XXH = require('xxhashjs');
 
 function dateUTC(value) {
   if (value === null)
@@ -48,7 +48,7 @@ function queryHash(value) {
 
   value = value.replace(/[^0-9A-Za-z]+/g, ''); // Remove all non-alphanumeric characters
 
-  return crypto.createHash('md5').update(value || '').digest('hex');
+  return XXH.h64(value, 0xabcd).toString(36);
 }
 
 const Fields = {

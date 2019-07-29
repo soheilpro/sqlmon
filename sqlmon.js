@@ -28,6 +28,7 @@ const yargs = require('yargs')
   .option('duration', { type: 'string', default: '60s', alias: 'd', describe: 'Duration to run the profiler.'})
   .option('max-size', { type: 'number', default: 1024, describe: 'Maximum size of the trace file (in megabytes).'})
   .option('batch-size', { type: 'number', default: 1000, describe: 'Number of events to save in each batch.'})
+  .option('delay', { type: 'string', describe: 'Time to wait before starting.'})
   .option('collect-only', { type: 'boolean', conflicts: 'import', describe: 'Only collect events and do not save them to Elasticsearch.'})
   .option('import', { type: 'string', conflicts: 'collect-only', describe: 'Trace file to import.'});
 
@@ -70,6 +71,14 @@ async function main() {
     await connection.close();
   });
 
+  if (argv['delay']) {
+    const delay = parseDuration(argv['delay']);
+    const startTime = new Date(Date.now() + delay);
+    const until = `${padLeft(startTime.getHours(), 2, '0')}:${padLeft(startTime.getMinutes(), 2, '0')}:${padLeft(startTime.getSeconds(), 2, '0')}`;
+
+    await wait(delay, `Waiting ${argv['delay']} until ${until}... (Press [s] to start now)`, 's');
+  }
+
   console.log(`Connecting to ${argv['ss-address']}...`);
 
   await connection.open();
@@ -102,7 +111,7 @@ async function main() {
     const stopTime = new Date(Date.now() + duration);
     const until = `${padLeft(stopTime.getHours(), 2, '0')}:${padLeft(stopTime.getMinutes(), 2, '0')}:${padLeft(stopTime.getSeconds(), 2, '0')}`;
 
-    await wait(duration, `Collecting events for ${argv['duration']} until ${until}... (Press [c] to stop)`);
+    await wait(duration, `Collecting events for ${argv['duration']} until ${until}... (Press [c] to stop now)`, 'c');
 
     console.log("Stopping trace...");
 

@@ -1,12 +1,12 @@
 const readline = require('readline');
 
-async function wait(milliseconds, message) {
+async function wait(milliseconds, message, cancelKey) {
   return new Promise(resolve => {
     readline.emitKeypressEvents(process.stdin);
     process.stdin.setRawMode(true);
     process.stdin.resume();
     process.stdin.on('keypress', (_, key) => {
-      if (key.name === 'c' && !key.ctrl && !key.meta && !key.shift)
+      if (key.name === cancelKey && !key.ctrl && !key.meta && !key.shift)
         end();
     });
 

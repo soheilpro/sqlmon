@@ -93,6 +93,13 @@ If you have a saved trace file (created by either sqlmon or SQL Server Profiler)
 --import 'c:\trace\20190728042508732.trc'
 ```
 
+### Delayed start
+You can use the `--delay` option to delay starting the operations until a later time:
+
+```
+--delay 1h
+```
+
 ## QueryHash
 QueryHash is a special field that is created by removing all parameters and variables from the query (TextData) and then hashing it. It can be used to group events to find the top resource consuming queries.
 

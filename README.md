@@ -349,6 +349,8 @@ See [SQL Server Event Class Reference](https://docs.microsoft.com/en-us/sql/rela
 * XactSequence
 
 ## Version History
++ **1.1**
+	+ Added --collect-only option.
 + **1.0**
 	+ Initial release.
 

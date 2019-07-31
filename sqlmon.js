@@ -12,7 +12,6 @@ const wait = require('./wait');
 const padLeft = require('./pad').padLeft;
 
 const yargs = require('yargs')
-  .strict(true)
   .option('ss-address', { type: 'string', demandOption: true, describe: 'SQL Server address.'})
   .option('ss-port', { type: 'numbe', default: 1433, describe: 'SQL Server port.'})
   .option('ss-user', { type: 'string', demandOption: true,describe: 'SQL Server user.'})
@@ -30,7 +29,8 @@ const yargs = require('yargs')
   .option('batch-size', { type: 'number', default: 1000, describe: 'Number of events to save in each batch.'})
   .option('delay', { type: 'string', describe: 'Time to wait before starting.'})
   .option('collect-only', { type: 'boolean', conflicts: 'import', describe: 'Only collect events and do not save them to Elasticsearch.'})
-  .option('import', { type: 'string', conflicts: 'collect-only', describe: 'Trace file to import.'});
+  .option('import', { type: 'string', conflicts: 'collect-only', describe: 'Trace file to import.'})
+  .strict(true);
 
 const cleanupHandlers = [];
 

@@ -1,6 +1,8 @@
 # sqlmon
 Collects events from SQL Server and saves them to Elasticsearch for further analysis.
 
+You can use [sqltop](https://github.com/soheilpro/sqltop) or Kibana to analyze these data.
+
 ## Installation
 
 ```

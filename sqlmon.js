@@ -65,12 +65,27 @@ let env = {
 
 const cleanupHandlers = [];
 
-const cleanup = async () => {
+async function cleanup() {
   for (cleanupHandler of cleanupHandlers.reverse())
     await cleanupHandler();
 };
 
-process.on('SIGTERM', async () => {
+async function onError(error) {
+  console.error(error);
+
+  await cleanup();
+
+  if (argv['error-hook']) {
+    child_process.execFile(argv['error-hook'], {
+      env: {
+        ...env,
+        SQLMON_ERROR: error.toString(),
+      }
+    });
+  }
+}
+
+async function onInterrupt() {
   await cleanup();
 
   if (argv['interrupt-hook']) {
@@ -80,19 +95,12 @@ process.on('SIGTERM', async () => {
   }
 
   process.exit();
-});
+}
 
-process.on('SIGINT', async () => {
-  await cleanup();
-
-  if (argv['interrupt-hook']) {
-    child_process.execFile(argv['interrupt-hook'], {
-      env: env,
-    });
-  }
-
-  process.exit();
-});
+process.on('SIGTERM', onInterrupt);
+process.on('SIGINT', onInterrupt);
+process.on('uncaughtException', onError);
+process.on('unhandledRejection', onError);
 
 async function main() {
   const events = argv['events'].map(event => Events[event]);
@@ -269,17 +277,4 @@ async function main() {
   }
 }
 
-main().catch(async error => {
-  console.error(error);
-
-  await cleanup();
-
-  if (argv['error-hook']) {
-    child_process.execFile(argv['error-hook'], {
-      env: {
-        ...env,
-        SQLMON_ERROR: error.toString(),
-      }
-    });
-  }
-});
+main();

@@ -1,5 +1,6 @@
 #!/usr/bin/env node
 
+const child_process = require('child_process');
 const parseDuration = require('parse-duration')
 const Connection = require('./connection');
 const Elasticsearch = require('./elasticsearch');
@@ -11,7 +12,7 @@ const Trace = require('./trace');
 const wait = require('./wait');
 const padLeft = require('./pad').padLeft;
 
-const yargs = require('yargs')
+const argv = require('yargs')
   .option('ss-address', { type: 'string', demandOption: true, describe: 'SQL Server address.'})
   .option('ss-port', { type: 'numbe', default: 1433, describe: 'SQL Server port.'})
   .option('ss-user', { type: 'string', demandOption: true,describe: 'SQL Server user.'})
@@ -30,7 +31,37 @@ const yargs = require('yargs')
   .option('delay', { type: 'string', describe: 'Time to wait before starting.'})
   .option('collect-only', { type: 'boolean', conflicts: 'import', describe: 'Only collect events and do not save them to Elasticsearch.'})
   .option('import', { type: 'string', conflicts: 'collect-only', describe: 'Trace file to import.'})
-  .strict(true);
+  .option('schedule-hook', { type: 'string', describe: 'Script to run when program is scheduled to run at a later time.'})
+  .option('collection-start-hook', { type: 'string', describe: 'Script to run when collection starts.'})
+  .option('collection-end-hook', { type: 'string', describe: 'Script to run when collection ends.'})
+  .option('save-start-hook', { type: 'string', describe: 'Script to run when saving starts.'})
+  .option('save-end-hook', { type: 'string', describe: 'Script to run when saving ends.'})
+  .option('error-hook', { type: 'string', describe: 'Script to run when an error occurs.'})
+  .option('interrupt-hook', { type: 'string', describe: 'Script to run when the program is interrupted.'})
+  .strict(true)
+  .argv;
+
+let env = {
+  ...process.env,
+  SQLMON_SQLSERVER_ADDRESS: argv['ss-address'],
+  SQLMON_SQLSERVER_PORT: argv['ss-port'],
+  SQLMON_SQLSERVER_USER: argv['ss-user'],
+  SQLMON_SQLSERVER_PASSWORD: argv['ss-password'],
+  SQLMON_SQLSERVER_TIMEOUT: argv['ss-timeout'],
+  SQLMON_ELASTICSEARCH_ADDRESS: argv['es-address'],
+  SQLMON_ELASTICSEARCH_PORT: argv['es-port'],
+  SQLMON_ELASTICSEARCH_TIMEOUT: argv['es-timeout'],
+  SQLMON_TRACE_DIRECTORY: argv['trace-directory'],
+  SQLMON_INDEX_PREFIX: argv['index-prefix'],
+  SQLMON_EVENTS: argv['events'],
+  SQLMON_FIELDS: argv['fields'],
+  SQLMON_DURATION: argv['duration'],
+  SQLMON_MAX_SIZE: argv['max-size'],
+  SQLMON_BATCH_SIZE: argv['batch-size'],
+  SQLMON_DELAY: argv['delay'],
+  SQLMON_COLLECT_ONLY: !!argv['collect-only'],
+  SQLMON_IMPORT: argv['import'],
+};
 
 const cleanupHandlers = [];
 
@@ -41,16 +72,29 @@ const cleanup = async () => {
 
 process.on('SIGTERM', async () => {
   await cleanup();
+
+  if (argv['interrupt-hook']) {
+    child_process.execFile(argv['interrupt-hook'], {
+      env: env,
+    });
+  }
+
   process.exit();
 });
 
 process.on('SIGINT', async () => {
   await cleanup();
+
+  if (argv['interrupt-hook']) {
+    child_process.execFile(argv['interrupt-hook'], {
+      env: env,
+    });
+  }
+
   process.exit();
 });
 
 async function main() {
-  const argv = yargs.argv;
   const events = argv['events'].map(event => Events[event]);
   const fields = argv['fields'].map(field => Fields[field]);
   let traceFilePath;
@@ -73,10 +117,20 @@ async function main() {
 
   if (argv['delay']) {
     const delay = parseDuration(argv['delay']);
-    const startTime = new Date(Date.now() + delay);
-    const until = `${padLeft(startTime.getHours(), 2, '0')}:${padLeft(startTime.getMinutes(), 2, '0')}:${padLeft(startTime.getSeconds(), 2, '0')}`;
+    const startDateTime = new Date(Date.now() + delay);
+    const startTime = `${padLeft(startDateTime.getHours(), 2, '0')}:${padLeft(startDateTime.getMinutes(), 2, '0')}:${padLeft(startDateTime.getSeconds(), 2, '0')}`;
 
-    await wait(delay, `Waiting ${argv['delay']} until ${until}... (Press [s] to start now)`, 's');
+    if (argv['schedule-hook']) {
+      child_process.execFile(argv['schedule-hook'], {
+        env: {
+          ...env,
+          SQLMON_START_DATETIME: startDateTime.toISOString(),
+          SQLMON_START_TIME: startTime,
+        }
+      });
+    }
+
+    await wait(delay, `Waiting ${argv['delay']} until ${startTime}... (Press [s] to start now)`, 's');
   }
 
   console.log(`Connecting to ${argv['ss-address']}...`);
@@ -102,18 +156,39 @@ async function main() {
 
     traceFilePath = trace.traceFilePath;
 
+    env = {
+      ...env,
+      SQLMON_TRACE_FILE_PATH: traceFilePath,
+    };
+
     console.log(`Trace file path: ${traceFilePath}`);
     console.log("Starting trace...");
 
+    const duration = parseDuration(argv['duration']);
+    const stopDateTime = new Date(Date.now() + duration);
+    const stopTime = `${padLeft(stopDateTime.getHours(), 2, '0')}:${padLeft(stopDateTime.getMinutes(), 2, '0')}:${padLeft(stopDateTime.getSeconds(), 2, '0')}`;
+
+    if (argv['collection-start-hook']) {
+      child_process.execFile(argv['collection-start-hook'], {
+        env: {
+          ...env,
+          SQLMON_STOP_DATETIME: stopDateTime.toISOString(),
+          SQLMON_STOP_TIME: stopTime,
+        }
+      });
+    }
+
     await trace.start();
 
-    const duration = parseDuration(argv['duration']);
-    const stopTime = new Date(Date.now() + duration);
-    const until = `${padLeft(stopTime.getHours(), 2, '0')}:${padLeft(stopTime.getMinutes(), 2, '0')}:${padLeft(stopTime.getSeconds(), 2, '0')}`;
-
-    await wait(duration, `Collecting events for ${argv['duration']} until ${until}... (Press [c] to stop now)`, 'c');
+    await wait(duration, `Collecting events for ${argv['duration']} until ${stopTime}... (Press [c] to stop now)`, 'c');
 
     console.log("Stopping trace...");
+
+    if (argv['collection-end-hook']) {
+      child_process.execFile(argv['collection-end-hook'], {
+        env: env,
+      });
+    }
 
     await trace.stop();
   }
@@ -121,6 +196,11 @@ async function main() {
     console.log(`Importing ${argv['import']}...`);
 
     traceFilePath = argv['import'];
+
+    env = {
+      ...env,
+      SQLMON_TRACE_FILE_PATH: traceFilePath,
+    };
   }
 
   if (!argv['collect-only']) {
@@ -142,6 +222,12 @@ async function main() {
       fields: fields,
       elasticsearch: elasticsearch,
     });
+
+    if (argv['save-start-hook']) {
+      child_process.execFile(argv['save-start-hook'], {
+        env: env,
+      });
+    }
 
     console.log(`Reading trace...`);
 
@@ -167,6 +253,12 @@ async function main() {
 
       console.log("Disconnecting...");
 
+      if (argv['save-end-hook']) {
+        child_process.execFile(argv['save-end-hook'], {
+          env: env,
+        });
+      }
+
       await connection.close();
     };
   }
@@ -179,5 +271,15 @@ async function main() {
 
 main().catch(async error => {
   console.error(error);
+
   await cleanup();
+
+  if (argv['error-hook']) {
+    child_process.execFile(argv['error-hook'], {
+      env: {
+        ...env,
+        SQLMON_ERROR: error.toString(),
+      }
+    });
+  }
 });

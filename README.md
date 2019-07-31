@@ -100,6 +100,46 @@ You can use the `--delay` option to delay starting the operations until a later 
 --delay 1h
 ```
 
+### Hooks
+There are a few hooks defined that let you run any program at certain stages of the execution:
+
+```
+--schedule-hook ./myscript.sh
+--collection-start-hook ./myscript.sh
+--collection-end-hook ./myscript.sh
+--save-start-hook ./myscript.sh
+--save-end-hook ./myscript.sh
+--error-hook ./myscript.sh
+--interrupt-hook ./myscript.sh
+```
+
+The following environment variables are available to use in your hooks:
+* SQLMON_SQLSERVER_ADDRESS
+* SQLMON_SQLSERVER_PORT
+* SQLMON_SQLSERVER_USER
+* SQLMON_SQLSERVER_PASSWORD
+* SQLMON_SQLSERVER_TIMEOUT
+* SQLMON_ELASTICSEARCH_ADDRESS
+* SQLMON_ELASTICSEARCH_PORT
+* SQLMON_ELASTICSEARCH_TIMEOUT
+* SQLMON_TRACE_DIRECTORY
+* SQLMON_INDEX_PREFIX
+* SQLMON_EVENTS
+* SQLMON_FIELDS
+* SQLMON_DURATION
+* SQLMON_MAX_SIZE
+* SQLMON_BATCH_SIZE
+* SQLMON_DELAY
+* SQLMON_COLLECT_ONLY
+* SQLMON_IMPORT
+* SQLMON_START_DATETIME
+* SQLMON_START_TIME
+* SQLMON_TRACE_FILE_PATH
+* SQLMON_STOP_DATETIME
+* SQLMON_STOP_TIME
+* SQLMON_TRACE_FILE_PATH
+* SQLMON_ERROR
+
 ## QueryHash
 QueryHash is a special field that is created by removing all parameters and variables from the query (TextData) and then hashing it. It can be used to group events to find the top resource consuming queries.
 

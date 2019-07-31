@@ -396,6 +396,8 @@ See [SQL Server Event Class Reference](https://docs.microsoft.com/en-us/sql/rela
 * XactSequence
 
 ## Version History
++ **1.3**
+    + Added support for hooks.
 + **1.2**
     + Added --delay option.
 + **1.1**

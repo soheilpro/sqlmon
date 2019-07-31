@@ -16,7 +16,7 @@ $ sqlmon \
     --es-address elasticsearch.example.com \
     --trace-directory 'c:\trace' \
     --events RPCCompleted SQLBatchCompleted \
-    --fields TextData QueryHash LoginName Duration Reads Writes CPU \
+    --fields TextData TextDataHash QueryHash LoginName Duration Reads Writes CPU \
     --duration 60s
 
 Connecting to sql.example.com...
@@ -140,8 +140,12 @@ The following environment variables are available to use in your hooks:
 * SQLMON_TRACE_FILE_PATH
 * SQLMON_ERROR
 
-## QueryHash
-QueryHash is a special field that is created by removing all parameters and variables from the query (TextData) and then hashing it. It can be used to group events to find the top resource consuming queries.
+## Computed fields
+### TextDataHash
+TextDataHash is the hash of the TextData field.
+
+### QueryHash
+QueryHash is created by first removing all parameters and variables from TextData and then hashing it. It is useful for grouping queries to find the top resource consuming ones.
 
 <img src="kibana.png" width="800" alt="Kibana" >
 
@@ -372,7 +376,7 @@ See [SQL Server Event Class Reference](https://docs.microsoft.com/en-us/sql/rela
 * ParentName
 * Permissions
 * ProviderName
-* [QueryHash](#queryhash)
+* [QueryHash](#computed-fields)
 * Reads
 * RequestID
 * RoleName
@@ -390,6 +394,7 @@ See [SQL Server Event Class Reference](https://docs.microsoft.com/en-us/sql/rela
 * TargetLoginSid
 * TargetUserName
 * TextData
+* [TextDataHash](#computed-fields)
 * TransactionID
 * Type
 * Writes

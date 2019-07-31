@@ -37,6 +37,10 @@ function hex(value) {
   return '0x' + value.toString('hex');
 }
 
+function hash(value) {
+  return XXH.h64(value || '', 0xabcd).toString(36);
+}
+
 function queryHash(value) {
   if (value === null)
     return null;
@@ -53,6 +57,7 @@ function queryHash(value) {
 
 const Fields = {
   TextData:          { id:  1, name: 'TextData' },
+  TextDataHash:      { id:  1, name: 'TextData', transform: hash, alias: 'TextDataHash' },
   QueryHash:         { id:  1, name: 'TextData', transform: queryHash, alias: 'QueryHash' },
   BinaryData:        { id:  2, name: 'BinaryData', transform: hex },
   DatabaseID:        { id:  3, name: 'DatabaseID' },

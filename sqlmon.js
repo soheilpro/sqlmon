@@ -12,22 +12,14 @@ const Trace = require('./trace');
 const wait = require('./wait');
 const padLeft = require('./pad').padLeft;
 
-const argv = require('yargs')
+let yargs = require('yargs')
   .option('ss-address', { type: 'string', demandOption: true, describe: 'SQL Server address.' })
   .option('ss-port', { type: 'numbe', default: 1433, describe: 'SQL Server port.' })
   .option('ss-user', { type: 'string', demandOption: true,describe: 'SQL Server user.' })
   .option('ss-password', { type: 'string', demandOption: true, describe: 'SQL server password.' })
   .option('ss-timeout', { type: 'number', default: 60, describe: 'SQL Server timeout (in seconds).' })
-  .option('es-address', { type: 'string', demandOption: true, describe: 'Elasticsearch address.' })
-  .option('es-port', { type: 'number', default: 9200, describe: 'Elasticsearch port.' })
-  .option('es-timeout', { type: 'number', default: 60, describe: 'Elasticsearch timeout (in seconds).' })
-  .option('trace-directory', { type: 'string', demandOption: true, describe: 'Directory to create the trace file.' })
-  .option('index-prefix', { type: 'string', default: 'sql-', describe: 'Elasticsearch index prefix.' })
   .option('events', { type: 'array', default: ['RPCCompleted', 'SQLBatchCompleted'], describe: 'Events to capture.' })
   .option('fields', { type: 'array', default: ['EventClass', 'TextData', 'TextDataHash', 'QueryHash', 'HostName', 'ClientProcessID', 'LoginName', 'SPID', 'Duration', 'StartTime', 'EndTime', 'Reads', 'Writes', 'CPU', 'ServerName', 'DatabaseName', 'RowCounts'], describe: 'Fields to include.' })
-  .option('duration', { type: 'string', demandOption: true, alias: 'd', describe: 'Duration to run the profiler.' })
-  .option('max-size', { type: 'number', default: 1024, describe: 'Maximum size of the trace file (in megabytes).' })
-  .option('batch-size', { type: 'number', default: 1000, describe: 'Number of events to save in each batch.' })
   .option('delay', { type: 'string', describe: 'Time to wait before starting.' })
   .option('collect-only', { type: 'boolean', conflicts: 'import', describe: 'Only collect events and do not save them to Elasticsearch.' })
   .option('import', { type: 'string', conflicts: 'collect-only', describe: 'Trace file to import.' })
@@ -37,7 +29,25 @@ const argv = require('yargs')
   .option('save-start-hook', { type: 'string', describe: 'Script to run when saving starts.' })
   .option('save-end-hook', { type: 'string', describe: 'Script to run when saving ends.' })
   .option('error-hook', { type: 'string', describe: 'Script to run when an error occurs.' })
-  .option('interrupt-hook', { type: 'string', describe: 'Script to run when the program is interrupted.' })
+  .option('interrupt-hook', { type: 'string', describe: 'Script to run when the program is interrupted.' });
+
+if (!yargs.argv['import']) {
+  yargs = yargs
+    .option('trace-directory', { type: 'string', demandOption: true, describe: 'Directory to create the trace file.' })
+    .option('duration', { type: 'string', demandOption: true, alias: 'd', describe: 'Duration to run the profiler.' })
+    .option('max-size', { type: 'number', default: 1024, describe: 'Maximum size of the trace file (in megabytes).' });
+}
+
+if (!yargs.argv['collect-only']) {
+  yargs = yargs
+    .option('es-address', { type: 'string', demandOption: true, describe: 'Elasticsearch address.' })
+    .option('es-port', { type: 'number', default: 9200, describe: 'Elasticsearch port.' })
+    .option('es-timeout', { type: 'number', default: 60, describe: 'Elasticsearch timeout (in seconds).' })
+    .option('batch-size', { type: 'number', default: 1000, describe: 'Number of events to save in each batch.' })
+    .option('index-prefix', { type: 'string', default: 'sql-', describe: 'Elasticsearch index prefix.' });
+}
+
+const argv = yargs
   .strict(true)
   .argv;
 

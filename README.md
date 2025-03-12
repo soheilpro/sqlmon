@@ -403,6 +403,8 @@ See [SQL Server Event Class Reference](https://docs.microsoft.com/en-us/sql/rela
 * XactSequence
 
 ## Version History
++ **1.5**
+    + Added authetication support for Elasticsearch.
 + **1.4**
     + Added TextDataHash field.
 + **1.3**

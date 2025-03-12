@@ -42,6 +42,8 @@ if (!yargs.argv['collect-only']) {
   yargs = yargs
     .option('es-address', { type: 'string', demandOption: true, describe: 'Elasticsearch address.' })
     .option('es-port', { type: 'number', default: 9200, describe: 'Elasticsearch port.' })
+    .option('es-username', { type: 'string', describe: 'Elasticsearch username.' })
+    .option('es-password', { type: 'string', describe: 'Elasticsearch password.' })
     .option('es-timeout', { type: 'number', default: 60, describe: 'Elasticsearch timeout (in seconds).' })
     .option('batch-size', { type: 'number', default: 1000, describe: 'Number of events to save in each batch.' })
     .option('index-prefix', { type: 'string', default: 'sql-', describe: 'Elasticsearch index prefix.' });
@@ -59,6 +61,8 @@ let env = {
   SQLMON_SQLSERVER_PASSWORD: argv['ss-password'],
   SQLMON_SQLSERVER_TIMEOUT: argv['ss-timeout'],
   SQLMON_ELASTICSEARCH_ADDRESS: argv['es-address'],
+  SQLMON_ELASTICSEARCH_USERNAME: argv['es-username'],
+  SQLMON_ELASTICSEARCH_PASSWORD: argv['es-password'],
   SQLMON_ELASTICSEARCH_PORT: argv['es-port'],
   SQLMON_ELASTICSEARCH_TIMEOUT: argv['es-timeout'],
   SQLMON_TRACE_DIRECTORY: argv['trace-directory'],
@@ -231,6 +235,8 @@ async function main() {
 
     const elasticsearch = new Elasticsearch({
       address: argv['es-address'],
+      username: argv['es-username'],
+      password: argv['es-password'],
       port: argv['es-port'],
       timeout: argv['es-timeout'] * 1000,
       indexPrefix: argv['index-prefix'],

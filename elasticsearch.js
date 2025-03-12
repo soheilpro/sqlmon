@@ -38,6 +38,9 @@ class Elasticsearch {
         timeout: this.config.timeout,
       };
 
+      if (this.config.username)
+        options.headers['Authorization'] = `Basic ${ Buffer.from(`${ this.config.username }:${ this.config.password }`).toString('base64') }`;
+
       const request = http.request(options, function(response) {
         if (response.statusCode !== 200)
           return reject(new Error(response.statusMessage));
